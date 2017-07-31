@@ -16,14 +16,22 @@ public class GameController : MonoBehaviour
     public List<Dir> Directions;
 
     public bool DebugThis;
+    private static GameController _gameController;
+    public static GameController Instance
+    {
+        get { return _gameController; }
+    }
 
-    // Use this for initialization
+    void Awake()
+    {
+        _gameController = this;
+    }
+    
     void Start()
     {
         Directions = new List<Dir>();
     }
-
-    // Update is called once per frame
+    
     void Update()
     {
         if (DebugThis && Directions.Count != 0)
@@ -149,9 +157,9 @@ public class GameController : MonoBehaviour
         }
     }
 
-    void FeelIt(long milliseconds = 25)
+    void FeelIt(long milliseconds = 15)
     {
-        SoundManager.Instance().PlayLetterSound();
+        SoundManager.Instance.Play();
 
         Vibration.Vibrate(milliseconds);
     }
