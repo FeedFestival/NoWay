@@ -90,6 +90,12 @@ public class DataService
 
         _connection.DropTable<Level>();
         _connection.CreateTable<Level>();
+
+        if (_connection.Table<Tile>().Where(x => x.Id > 0).FirstOrDefault() == null)
+        {
+            _connection.DropTable<Tile>();
+            _connection.CreateTable<Tile>();
+        }
     }
 
     /*
@@ -199,5 +205,14 @@ public class DataService
     public IEnumerable<Level> GetLevels()
     {
         return _connection.Table<Level>().Where(x => x.Id > 0);
+    }
+
+    public Tile[,] GetMainMenuTiles()
+    {
+        var tiles = _connection.Table<Tile>().Where(x => x.Id == 1);
+
+        var array = new Tile[10,10];
+
+        return null;
     }
 }

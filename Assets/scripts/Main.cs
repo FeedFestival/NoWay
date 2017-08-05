@@ -16,6 +16,9 @@ public class Main : MonoBehaviour
 
     public User LoggedUser;
 
+    public SceneSetup SceneSetup;
+
+    public bool SaveMemory;
 
     [HideInInspector]
     public DataService DataService;
@@ -42,6 +45,8 @@ public class Main : MonoBehaviour
 
         DataService = new DataService("Database.db");
         CreateSession();
+
+        SceneSetup.Init();
     }
 
     // callbacks

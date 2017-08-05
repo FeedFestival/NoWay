@@ -4,6 +4,7 @@ using UnityEngine;
 using System.Collections;
 using System;
 using System.Net;
+using System.Security.Cryptography.X509Certificates;
 using Assets.scripts.utils;
 
 public class User
@@ -95,5 +96,51 @@ public class Level
             Romana,
             Engleza,
             Portugheza);
+    }
+}
+
+public enum TileState
+{
+    Clear,
+    Blocked,
+    DeathZone
+}
+
+[Serializable]
+public class Tile
+{
+    [PrimaryKey, AutoIncrement]
+    public int Id { get; set; }
+
+    public int X { get; set; }
+    public int Y { get; set; }
+
+    public int TileState
+    {
+        get { return (int)State; }
+    }
+    public TileState State;
+
+    [Ignore]
+    public float x { get; set; }
+    [Ignore]
+    public float y { get; set; }
+    [Ignore]
+    public float z { get; set; }
+
+    public Vector3 Position;
+    
+    public Tile MakeTile(
+        TileState tileState = global::TileState.Clear,
+        int x = 0, 
+        int y = 0,
+        Vector3 position = default(Vector3))
+    {
+        State = tileState;
+        X = x;
+        Y = y;
+        Position = position;
+
+        return this;
     }
 }

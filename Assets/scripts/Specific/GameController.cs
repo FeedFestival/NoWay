@@ -7,15 +7,14 @@ using UnityEngine.UI;
 
 public class GameController : MonoBehaviour
 {
-    public enum Dir
-    {
-        Up, Right, Down, Left
-    }
+    public bool DebugThis;
 
     public Text DebugText;
-    public List<Dir> Directions;
 
-    public bool DebugThis;
+    public Sphere Sphere;
+
+    public List<Dir> Directions;
+    
     private static GameController _gameController;
     public static GameController Instance
     {
@@ -30,24 +29,17 @@ public class GameController : MonoBehaviour
     void Start()
     {
         Directions = new List<Dir>();
+
+        if (DebugThis == false)
+        {
+            // Garbage Collect
+            Destroy(DebugText.gameObject);
+            DebugText = null;
+        }
     }
     
     void Update()
     {
-        if (DebugThis && Directions.Count != 0)
-        {
-            DebugText.text = string.Empty;
-            for (int i = Directions.Count - 1; i >= 0; i--)
-            {
-                DebugText.text = Directions[i] + "[" + i + "] > " + DebugText.text;
-            }
-
-            // TODO: !!!!!
-            // allways go with Directions[0] as where to go !
-
-            // DebugText.text = Directions[Directions.Count - 1].ToString();
-        }
-
         //  Up
         if (Input.GetKeyDown(KeyCode.W))
         {
@@ -87,6 +79,39 @@ public class GameController : MonoBehaviour
         {
             GoLeft(false);
         }
+
+        // send event continuously
+        if (Directions.Count > 0 && Sphere.Moving == false)
+            StartCoroutine(Sphere.Go(Directions[0]));
+    }
+
+    private void AddDirection(Dir dir)
+    {
+        Directions.Add(dir);
+
+        OnDirectionChange();
+    }
+
+    private void RemoveDirection(Dir dir)
+    {
+        Directions.RemoveAll(d => d == dir);
+        
+        OnDirectionChange();
+    }
+
+    private void OnDirectionChange()
+    {
+        if (DebugThis)
+            ShowDirections();
+    }
+
+    private void ShowDirections()
+    {
+        DebugText.text = string.Empty;
+        for (int i = Directions.Count - 1; i >= 0; i--)
+        {
+            DebugText.text = Directions[i] + "[" + i + "] > " + DebugText.text;
+        }
     }
 
     public void GoUp(bool press)
@@ -98,11 +123,11 @@ public class GameController : MonoBehaviour
         {
             FeelIt();
 
-            Directions.Add(Dir.Up);
+            AddDirection(Dir.Up);
         }
         else
         {
-            Directions.RemoveAll(dir => dir == Dir.Up);
+            RemoveDirection(Dir.Up);
         }
     }
 
@@ -115,11 +140,11 @@ public class GameController : MonoBehaviour
         {
             FeelIt();
 
-            Directions.Add(Dir.Right);
+            AddDirection(Dir.Right);
         }
         else
         {
-            Directions.RemoveAll(dir => dir == Dir.Right);
+            RemoveDirection(Dir.Right);
         }
     }
 
@@ -132,11 +157,11 @@ public class GameController : MonoBehaviour
         {
             FeelIt();
 
-            Directions.Add(Dir.Down);
+            AddDirection(Dir.Down);
         }
         else
         {
-            Directions.RemoveAll(dir => dir == Dir.Down);
+            RemoveDirection(Dir.Down);
         }
     }
 
@@ -149,18 +174,23 @@ public class GameController : MonoBehaviour
         {
             FeelIt();
 
-            Directions.Add(Dir.Left);
+            AddDirection(Dir.Left);
         }
         else
         {
-            Directions.RemoveAll(dir => dir == Dir.Left);
+            RemoveDirection(Dir.Left);
         }
     }
-
+    
     void FeelIt(long milliseconds = 15)
     {
         SoundManager.Instance.Play();
 
         Vibration.Vibrate(milliseconds);
     }
+}
+
+public enum Dir
+{
+    Up, Right, Down, Left
 }

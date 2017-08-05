@@ -1,24 +1,40 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using Assets.scripts.utils;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class SceneSetup : MonoBehaviour
 {
+    [HideInInspector]
     public bool UseFixedScreenScaler;
+    
+    [HideInInspector]
+    public int SidePadding;
+    [HideInInspector]
+    public int BlockWidth;
+    [HideInInspector]
+    public int DesiredTilesNumber;
 
-    public int HorizontalTileCount;
-    public int VerticalTileCount;
+    [HideInInspector]
+    public GameObject MapImage;
+
+    public string MapName;
+
+    public bool DebugThis;
+    public bool SeeGrid;
 
     public RectTransform CanvasSizer;
+    public RectTransform Sizer;
     public RectTransform TopPivot;
     public RectTransform BottomPivot;
     public RectTransform MidPoint;
     public RectTransform HalfTempPoint;
 
-    public GameObject GameSurface;
-
-    //
+    public GameObject TempTile;
+    
+    // private calculation vars
 
     private float _widthPercent = 17.5f;
     private float _widthRightPercent = 19f;
@@ -26,105 +42,253 @@ public class SceneSetup : MonoBehaviour
 
     private float _initialZ = 100f;
 
+    //
 
+    private float _width;
+    private float _height;
 
-    void Start()
+    public float TileSizeX;
+    private Vector2 _topPivotWPos;
+
+    private float _starPosX;
+    private float _posY;
+    private float _posZ;
+
+    //
+
+    public void Init()
     {
+        MapImage.SetActive(true);
+        TempTile.SetActive(true);
+        Sizer.gameObject.SetActive(true);
+
+        GameController.Instance.Sphere.gameObject.SetActive(true);
+        
         StartCoroutine(Calculate());
     }
 
     private IEnumerator Calculate()
     {
+        Game.Instance.Tiles = Main.Instance.DataService.GetMainMenuTiles();
+
         yield return new WaitForSeconds(0.1f);
         //---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         //---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-        var width = CanvasSizer.sizeDelta.x;
-        var height = CanvasSizer.sizeDelta.y;
+        Sizer.sizeDelta = new Vector2(
+            utils.GetPercent(CanvasSizer.sizeDelta.x, 100f),
+            utils.GetPercent(CanvasSizer.sizeDelta.y, 100f)
+            );
+
+        if (DebugThis == false)
+        {
+            TopPivot.GetComponent<Image>().enabled = false;
+            BottomPivot.GetComponent<Image>().enabled = false;
+            MidPoint.GetComponent<Image>().enabled = false;
+            HalfTempPoint.GetComponent<Image>().enabled = false;
+        }
+
+        CalculateTempTileSize();
 
         if (UseFixedScreenScaler)
         {
-            // 1. calculate top point
-            var newPosX = utils.GetPercent(width, _widthPercent);
-            var newPosY = utils.GetPercent(height, _heightPercent);
-            TopPivot.localPosition = new Vector3(
-                newPosX,
-                -newPosY,
-                _initialZ
-            );
+            TileSizeX = TempTile.transform.localScale.x / Game.Instance.HorizontalTileCount;
 
-            // 2. calculate bottom point
-            newPosX = utils.GetPercent(width, 100 - _widthRightPercent);
-            BottomPivot.localPosition = new Vector3(
-                +newPosX,
-                newPosY - height,
-                _initialZ
-            );
+            Game.Instance.VerticalTileCount = (int)(TempTile.transform.localScale.y / TileSizeX);
+            var remainingSpace = TempTile.transform.localScale.y - (Game.Instance.VerticalTileCount * TileSizeX);
 
-            // 3. calculate mid point
-            var topPivotWPos = TopPivot.position;
-            var bottomPivotWPos = BottomPivot.position;
-            Vector2 mPos = new Vector2(
-                (topPivotWPos.x + bottomPivotWPos.x) / 2,
-                (topPivotWPos.y + bottomPivotWPos.y) / 2
-            );
+            _starPosX = _topPivotWPos.x + TileSizeX / 2;
+            _posY = (_topPivotWPos.y - TileSizeX / 2) - (remainingSpace / 2);
 
-            MidPoint.position = mPos;
-            MidPoint.localPosition = new Vector3(MidPoint.localPosition.x, MidPoint.localPosition.y, _initialZ);
+            PlaceTiles();
+        }
+        else
+        {
+            TileSizeX = TempTile.transform.localScale.x / DesiredTilesNumber;
 
-            // 
-            HalfTempPoint.position = new Vector3(MidPoint.position.x, TopPivot.position.y, TopPivot.position.z);
+            //  1. scale the mapImage
+            var sidePaddingValue = BlockWidth / SidePadding;
+            var padding = TileSizeX / sidePaddingValue;
 
-            var yLenght = Vector3.Distance(MidPoint.position, HalfTempPoint.position) * 2;
-            var tempPos = new Vector3(MidPoint.position.x, BottomPivot.position.y, MidPoint.position.z);
-            var xLength = Vector3.Distance(TopPivot.position, HalfTempPoint.position) +
-                          Vector3.Distance(tempPos, BottomPivot.position);
+            var mapImageSizeX = (TileSizeX * Game.Instance.HorizontalTileCount) + (SidePadding * 2);
+            var mapImageSizeY = (TileSizeX * Game.Instance.VerticalTileCount) + (SidePadding * 2);
 
-            //var gamelevel = GameSurface.transform.parent;
-            //GameSurface.transform.parent = null;
+            Debug.Log(TileSizeX + ", " + Game.Instance.HorizontalTileCount + ", " + padding);
+            Debug.Log(mapImageSizeY);
 
-            GameSurface.transform.localScale = SetGlobalScale(GameSurface.transform, new Vector3(xLength, yLenght, 1));
-            GameSurface.transform.position = MidPoint.transform.position;
+            MapImage.transform.localScale = SetGlobalScale(MapImage.transform, new Vector3(mapImageSizeX, mapImageSizeY, 1));
 
-            //GameSurface.transform.parent = gamelevel;
+            //  2. Position the mapImage
+            var halfLenght = (MapImage.transform.localScale.x / 2);
+            var halfHeight = (MapImage.transform.localScale.y / 2);
 
-            // Create the board.
-            var tileSizeX = GameSurface.transform.localScale.x / HorizontalTileCount;
+            var origX = HalfTempPoint.position.x;
+            HalfTempPoint.position = new Vector3(TopPivot.position.x + halfLenght, TopPivot.position.y, HalfTempPoint.position.z);
+            var xDiff = HalfTempPoint.position.x - origX;
+            MidPoint.position = new Vector3(MidPoint.position.x + xDiff, TopPivot.position.y - halfHeight, MidPoint.position.z);
 
-            var z = GameSurface.transform.position.z;
+            MapImage.transform.position = new Vector3(MidPoint.transform.position.x, MidPoint.transform.position.y, _posZ);
 
-            var verticalCount = (int)(GameSurface.transform.localScale.y / tileSizeX);
-            var remainingSpace = GameSurface.transform.localScale.y - (verticalCount * tileSizeX);
-            
-            var starPosX = topPivotWPos.x + tileSizeX / 2;
-            var startPosY = (topPivotWPos.y - tileSizeX / 2) - (remainingSpace / 2);
-            
-            float posY = startPosY;
-            
-            for (int y = 0; y < verticalCount; y++)
+            // 3. Create tiles
+            _starPosX = (_topPivotWPos.x + TileSizeX / 2) + padding;
+            _posY = (_topPivotWPos.y - TileSizeX / 2) - padding;
+
+            PlaceTiles();
+        }
+
+        if (Main.Instance.SaveMemory)
+        {
+            GameController.Instance.Sphere.Init(TileSizeX, tile: Game.Instance.Tiles[0, 0]);
+        }
+        else
+        {
+            GameController.Instance.Sphere.Init(TileSizeX, tileObject: Game.Instance.TileObjects[0, 0]);
+        }
+
+        // garbage collect
+        Destroy(TempTile);
+        TempTile = null;
+
+        if (DebugThis == false)
+        {
+            Destroy(TopPivot.gameObject);
+            Destroy(BottomPivot.gameObject);
+            Destroy(MidPoint.gameObject);
+            Destroy(HalfTempPoint.gameObject);
+
+            TopPivot = null;
+            BottomPivot = null;
+            MidPoint = null;
+            HalfTempPoint = null;
+        }
+    }
+
+    private void CalculateTempTileSize()
+    {
+        _width = CanvasSizer.sizeDelta.x;
+        _height = CanvasSizer.sizeDelta.y;
+
+        // 1. calculate top point
+        var newPosX = utils.GetPercent(_width, _widthPercent);
+        var newPosY = utils.GetPercent(_height, _heightPercent);
+        TopPivot.localPosition = new Vector3(
+            newPosX,
+            -newPosY,
+            _initialZ
+        );
+
+        // 2. calculate bottom point
+        newPosX = utils.GetPercent(_width, 100 - _widthRightPercent);
+        BottomPivot.localPosition = new Vector3(
+            +newPosX,
+            newPosY - _height,
+            _initialZ
+        );
+
+        // 3. calculate mid point
+        _topPivotWPos = TopPivot.position;
+        var bottomPivotWPos = BottomPivot.position;
+        Vector2 mPos = new Vector2(
+            (_topPivotWPos.x + bottomPivotWPos.x) / 2,
+            (_topPivotWPos.y + bottomPivotWPos.y) / 2
+        );
+
+        MidPoint.position = mPos;
+        MidPoint.localPosition = new Vector3(MidPoint.localPosition.x, MidPoint.localPosition.y, _initialZ);
+
+        // 
+        HalfTempPoint.position = new Vector3(MidPoint.position.x, TopPivot.position.y, TopPivot.position.z);
+
+        var yLenght = Vector3.Distance(MidPoint.position, HalfTempPoint.position) * 2;
+        var tempPos = new Vector3(MidPoint.position.x, BottomPivot.position.y, MidPoint.position.z);
+        var xLength = Vector3.Distance(TopPivot.position, HalfTempPoint.position) +
+                      Vector3.Distance(tempPos, BottomPivot.position);
+
+        // Create the board.
+        TempTile.transform.localScale = SetGlobalScale(TempTile.transform, new Vector3(xLength, yLenght, 1));
+        TempTile.transform.position = MidPoint.transform.position;
+
+        _posZ = TempTile.transform.position.z;
+    }
+
+    private void PlaceTiles()
+    {
+        if (Game.Instance.Tiles == null)
+            Game.Instance.Tiles = new Tile[Game.Instance.VerticalTileCount, Game.Instance.HorizontalTileCount];
+
+        if (Main.Instance.SaveMemory == false)
+            Game.Instance.TileObjects = new TileObject[Game.Instance.VerticalTileCount, Game.Instance.HorizontalTileCount];
+
+        for (int y = 0; y < Game.Instance.VerticalTileCount; y++)
+        {
+            float posX = _starPosX;
+
+            for (int x = 0; x < Game.Instance.HorizontalTileCount; x++)
             {
-                float posX = starPosX;
+                if (x != 0)
+                {
+                    posX = posX + TileSizeX;
+                }
 
-                for (int x = 0; x < HorizontalTileCount; x++)
+                if (Main.Instance.SaveMemory == false)
                 {
                     GameObject tile = Instantiate(Resources.Load("Prefabs/tile", typeof(GameObject))) as GameObject;
                     if (tile != null)
                     {
-                        if (x != 0)
-                        {
-                            posX = posX + tileSizeX;
-                        }
+                        tile.transform.position = new Vector3(posX, _posY, _posZ - 10);
+                        tile.transform.localScale = new Vector3(TileSizeX, TileSizeX, 1);
+                        tile.name = "[" + y + ", " + x + "]";
 
-                        tile.transform.position = new Vector3(posX, posY, z);
-                        tile.transform.localScale = new Vector3(tileSizeX, tileSizeX, 1);
+                        TileObject tileObject = tile.gameObject.GetComponent<TileObject>();
+                        if (tileObject == null)
+                            tileObject = tile.gameObject.AddComponent<TileObject>();
+
+                        tileObject.Init(Game.Instance.Tiles[x, y], x, y);
+
+                        // light em up !
+                        LightEmUp(tileObject);
+
+                        Game.Instance.TileObjects[x, y] = tileObject;
                     }
                 }
-                posY = posY - tileSizeX;
-            }
+                else
+                {
+                    if (Game.Instance.Tiles[x, y] == null)
+                        Game.Instance.Tiles[x, y] = new Tile();
 
-            // garbage collect
-            Destroy(GameSurface);
-            GameSurface = null;
+                    Game.Instance.Tiles[x, y].MakeTile(
+                            x: x,
+                            y: y,
+                            position: new Vector3(posX, _posY, _posZ - 10),
+                            tileState: TileState.Clear
+                        );
+                }
+            }
+            _posY = _posY - TileSizeX;
+        }
+    }
+
+    private void LightEmUp(TileObject tile)
+    {
+        if (SeeGrid)
+        {
+            switch (tile.State)
+            {
+                case TileState.Clear:
+                    tile.Sprite.color = new Color(255f, 255f, 255f, 0.1f);
+                    break;
+                case TileState.Blocked:
+                    tile.Sprite.color = Color.red;
+                    break;
+                case TileState.DeathZone:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+        else
+        {
+            tile.Sprite.enabled = false;
         }
     }
 

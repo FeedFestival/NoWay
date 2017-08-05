@@ -35,7 +35,7 @@ namespace Assets.scripts.utils
         //    return (b.ScreenHeight / 100f) * percent;
         //}
 
-        private static int _fontSize;
+        //private static int _fontSize;
 
         public static void Setup()
         {
@@ -45,10 +45,10 @@ namespace Assets.scripts.utils
             }
         }
 
-        public static int GetFontSize()
-        {
-            return _fontSize;
-        }
+        //public static int GetFontSize()
+        //{
+        //    return _fontSize;
+        //}
 
         //public static string GetEnumDescription(Enum value)
         //{
