@@ -81,8 +81,22 @@ public class GameController : MonoBehaviour
         }
 
         // send event continuously
-        if (Directions.Count > 0 && Sphere.Moving == false)
-            StartCoroutine(Sphere.Go(Directions[0]));
+        if (Directions.Count > 0)
+        {
+            if (Sphere.LeanDir != Directions[0])
+                StartCoroutine(Sphere.AttemptGo(Directions[0]));
+
+            if (Sphere.Moving == false)
+            {
+                StartCoroutine(Sphere.Go(Directions[0]));
+            }
+        }
+        else
+        {
+            StartCoroutine(Sphere.AttemptGo(Dir.None));
+            //if (Sphere.Moving == false)
+            //    Sphere.AtRest();
+        }
     }
 
     private void AddDirection(Dir dir)
@@ -192,5 +206,5 @@ public class GameController : MonoBehaviour
 
 public enum Dir
 {
-    Up, Right, Down, Left
+    None, Up, Right, Down, Left
 }

@@ -10,6 +10,7 @@ public class Sphere : MonoBehaviour
     public Tile CurrentTile;
 
     public GameObject Sphere3D;
+    public GameObject SphereOutline;
 
     private Tile _toMoveTo;
 
@@ -35,6 +36,8 @@ public class Sphere : MonoBehaviour
         transform.localScale = new Vector3(utils.TileSizeX, utils.TileSizeX, 1);
 
         _animationTime = 0.3f;
+        _origSPos = Sphere3D.transform.localPosition;
+        _origOutlinePos = SphereOutline.transform.localPosition;
 
         //
         _boxController = Main.Instance.SceneSetup.BoxController;
@@ -80,6 +83,88 @@ public class Sphere : MonoBehaviour
 
         CurrentTile = _toMoveTo;
         Moving = false;
+    }
+
+    private Vector3 _origSPos;
+    private Vector3 _origOutlinePos;
+    private Vector3 _sideSPos;
+    private Vector3 _sideOutlinePos;
+
+    private float _leanAnimationTime = 0.1f;
+
+    private Dir _currentDir;
+    public Dir LeanDir;
+
+    private bool _isLeaned;
+
+    public IEnumerator AttemptGo(Dir dir)
+    {
+        _currentDir = dir;
+
+        if (_isLeaned)
+            yield break;
+
+        _isLeaned = true;
+        LeanDir = dir;
+
+        SetLeanPosition();
+        LeanTween.moveLocal(Sphere3D, _sideSPos, _leanAnimationTime).setEase(LeanTweenType.linear);
+        LeanTween.moveLocal(SphereOutline, _sideOutlinePos, _leanAnimationTime).setEase(LeanTweenType.linear);
+
+        yield return new WaitForSeconds(_animationTime - _leanAnimationTime);
+
+        if (LeanDir == _currentDir)
+            yield break;
+
+        _isLeaned = false;
+
+        if (_currentDir == Dir.None)
+        {
+            AtRest();
+        }
+        else
+        {
+            StartCoroutine(AttemptGo(_currentDir));
+        }
+        //LeanTween.moveLocal(Sphere3D, _origSPos, _leanAnimationTime).setEase(LeanTweenType.linear);
+        //LeanTween.moveLocal(SphereOutline, _origOutlinePos, _leanAnimationTime).setEase(LeanTweenType.linear);
+    }
+
+    public void AtRest()
+    {
+        _currentDir = Dir.None;
+        LeanDir = Dir.None;
+        _isLeaned = false;
+        LeanTween.moveLocal(Sphere3D, _origSPos, _leanAnimationTime).setEase(LeanTweenType.linear);
+        LeanTween.moveLocal(SphereOutline, _origOutlinePos, _leanAnimationTime).setEase(LeanTweenType.linear);
+    }
+
+    private void SetLeanPosition()
+    {
+        switch (LeanDir)
+        {
+            case Dir.Up:
+                _sideSPos = new Vector3(_origSPos.x, _origSPos.y + 0.1f, _origSPos.z);
+                _sideOutlinePos = new Vector3(_origOutlinePos.x, _origOutlinePos.y + 0.1f, _origOutlinePos.z);
+                
+                break;
+            case Dir.Right:
+                _sideSPos = new Vector3(_origSPos.x + 0.1f, _origSPos.y, _origSPos.z);
+                _sideOutlinePos = new Vector3(_origOutlinePos.x + 0.1f, _origOutlinePos.y, _origOutlinePos.z);
+                break;
+            case Dir.Down:
+                _sideSPos = new Vector3(_origSPos.x, _origSPos.y - 0.1f, _origSPos.z);
+                _sideOutlinePos = new Vector3(_origOutlinePos.x, _origOutlinePos.y - 0.1f, _origOutlinePos.z);
+                break;
+            case Dir.Left:
+                _sideSPos = new Vector3(_origSPos.x - 0.1f, _origSPos.y, _origSPos.z);
+                _sideOutlinePos = new Vector3(_origOutlinePos.x - 0.1f, _origOutlinePos.y, _origOutlinePos.z);
+                break;
+            default:
+                _sideSPos = _origSPos;
+                _sideOutlinePos = _origOutlinePos;
+                break;
+        }
     }
 
     private Vector3 GetNewPos(Dir dir, ref bool noMove)
@@ -166,11 +251,7 @@ public class Sphere : MonoBehaviour
             if (adiacentTile.State != TileState.Clear)
                 return true;
 
-            var boxObj = _boxController.Boxes.FirstOrDefault(
-                box => 
-                box.X == (CurrentTile.X + x)
-                && box.Y == (CurrentTile.Y + y)
-                );
+            var boxObj = _boxController.Boxes.FirstOrDefault(box => box.X == (CurrentTile.X + x) && box.Y == (CurrentTile.Y + y));
             if (boxObj != null)
                 StartCoroutine(boxObj.Go(GetDirection(x, y), adiacentTile));
         }
@@ -180,8 +261,7 @@ public class Sphere : MonoBehaviour
 
     private bool IsWithinGridBounds(int x, int y)
     {
-        if (CurrentTile.X + x < 0 || CurrentTile.Y + y < 0 || CurrentTile.X + x >= Game.Instance.HorizontalTileCount ||
-            CurrentTile.Y + y >= Game.Instance.VerticalTileCount)
+        if (CurrentTile.X + x < 0 || CurrentTile.Y + y < 0 || CurrentTile.X + x >= Game.Instance.HorizontalTileCount || CurrentTile.Y + y >= Game.Instance.VerticalTileCount)
             return false;
         return true;
     }
