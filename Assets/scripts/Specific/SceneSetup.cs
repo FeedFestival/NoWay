@@ -9,7 +9,9 @@ public class SceneSetup : MonoBehaviour
 {
     [HideInInspector]
     public bool UseFixedScreenScaler;
-    
+
+    [HideInInspector]
+    public int ExtraPadding;
     [HideInInspector]
     public int SidePadding;
     [HideInInspector]
@@ -22,6 +24,13 @@ public class SceneSetup : MonoBehaviour
 
     public string MapName;
 
+    public int SphereStartX;
+    public int SphereStartY;
+
+    public BoxController BoxController;
+
+    [Header("Setup Options")]
+
     public bool DebugThis;
     public bool SeeGrid;
 
@@ -33,7 +42,7 @@ public class SceneSetup : MonoBehaviour
     public RectTransform HalfTempPoint;
 
     public GameObject TempTile;
-    
+
     // private calculation vars
 
     private float _widthPercent = 17.5f;
@@ -46,8 +55,7 @@ public class SceneSetup : MonoBehaviour
 
     private float _width;
     private float _height;
-
-    public float TileSizeX;
+    
     private Vector2 _topPivotWPos;
 
     private float _starPosX;
@@ -63,7 +71,7 @@ public class SceneSetup : MonoBehaviour
         Sizer.gameObject.SetActive(true);
 
         GameController.Instance.Sphere.gameObject.SetActive(true);
-        
+
         StartCoroutine(Calculate());
     }
 
@@ -92,29 +100,39 @@ public class SceneSetup : MonoBehaviour
 
         if (UseFixedScreenScaler)
         {
-            TileSizeX = TempTile.transform.localScale.x / Game.Instance.HorizontalTileCount;
+            utils.TileSizeX = TempTile.transform.localScale.x / Game.Instance.HorizontalTileCount;
 
-            Game.Instance.VerticalTileCount = (int)(TempTile.transform.localScale.y / TileSizeX);
-            var remainingSpace = TempTile.transform.localScale.y - (Game.Instance.VerticalTileCount * TileSizeX);
+            Game.Instance.VerticalTileCount = (int)(TempTile.transform.localScale.y / utils.TileSizeX);
+            var remainingSpace = TempTile.transform.localScale.y - (Game.Instance.VerticalTileCount * utils.TileSizeX);
 
-            _starPosX = _topPivotWPos.x + TileSizeX / 2;
-            _posY = (_topPivotWPos.y - TileSizeX / 2) - (remainingSpace / 2);
+            _starPosX = _topPivotWPos.x + utils.TileSizeX / 2;
+            _posY = (_topPivotWPos.y - utils.TileSizeX / 2) - (remainingSpace / 2);
 
             PlaceTiles();
         }
         else
         {
-            TileSizeX = TempTile.transform.localScale.x / DesiredTilesNumber;
+            utils.TileSizeX = TempTile.transform.localScale.x / DesiredTilesNumber;
+
+            // 0. figure out the extra padding based on the ratio beetween the image tile size and the current calculated tile size
+
+            var extraPaddingRatio = utils.TileSizeX / BlockWidth;
+            var extraPadding = ExtraPadding * extraPaddingRatio;
+
+            Debug.Log(extraPadding);
 
             //  1. scale the mapImage
-            var sidePaddingValue = BlockWidth / SidePadding;
-            var padding = TileSizeX / sidePaddingValue;
 
-            var mapImageSizeX = (TileSizeX * Game.Instance.HorizontalTileCount) + (SidePadding * 2);
-            var mapImageSizeY = (TileSizeX * Game.Instance.VerticalTileCount) + (SidePadding * 2);
+            float sidePaddingValue;
+            if (BlockWidth > SidePadding)
+                sidePaddingValue = (float)BlockWidth / (float)SidePadding;
+            else
+                sidePaddingValue = (float)SidePadding / (float)BlockWidth;
 
-            Debug.Log(TileSizeX + ", " + Game.Instance.HorizontalTileCount + ", " + padding);
-            Debug.Log(mapImageSizeY);
+            var padding = utils.TileSizeX / sidePaddingValue;
+
+            var mapImageSizeX = (utils.TileSizeX * Game.Instance.HorizontalTileCount) + (padding * 2) + (extraPadding * 2);
+            var mapImageSizeY = (utils.TileSizeX * Game.Instance.VerticalTileCount) + (padding * 2) + (extraPadding * 2);
 
             MapImage.transform.localScale = SetGlobalScale(MapImage.transform, new Vector3(mapImageSizeX, mapImageSizeY, 1));
 
@@ -130,22 +148,27 @@ public class SceneSetup : MonoBehaviour
             MapImage.transform.position = new Vector3(MidPoint.transform.position.x, MidPoint.transform.position.y, _posZ);
 
             // 3. Create tiles
-            _starPosX = (_topPivotWPos.x + TileSizeX / 2) + padding;
-            _posY = (_topPivotWPos.y - TileSizeX / 2) - padding;
+            _starPosX = (_topPivotWPos.x + utils.TileSizeX / 2) + padding + extraPadding;
+            _posY = (_topPivotWPos.y - utils.TileSizeX / 2) - padding - extraPadding;
 
             PlaceTiles();
         }
 
         if (Main.Instance.SaveMemory)
         {
-            GameController.Instance.Sphere.Init(TileSizeX, tile: Game.Instance.Tiles[0, 0]);
+            GameController.Instance.Sphere.Init(tile: Game.Instance.Tiles[SphereStartX, SphereStartY]);
         }
         else
         {
-            GameController.Instance.Sphere.Init(TileSizeX, tileObject: Game.Instance.TileObjects[0, 0]);
+            GameController.Instance.Sphere.Init(tileObject: Game.Instance.TileObjects[SphereStartX, SphereStartY]);
         }
 
+        BoxController.Init();
+
+        //-----------------------------------------------------------------------------------------------------------------------------
         // garbage collect
+        //-----------------------------------------------------------------------------------------------------------------------------
+        //-----------------------------------------------------------------------------------------------------------------------------
         Destroy(TempTile);
         TempTile = null;
 
@@ -227,7 +250,7 @@ public class SceneSetup : MonoBehaviour
             {
                 if (x != 0)
                 {
-                    posX = posX + TileSizeX;
+                    posX = posX + utils.TileSizeX;
                 }
 
                 if (Main.Instance.SaveMemory == false)
@@ -236,7 +259,7 @@ public class SceneSetup : MonoBehaviour
                     if (tile != null)
                     {
                         tile.transform.position = new Vector3(posX, _posY, _posZ - 10);
-                        tile.transform.localScale = new Vector3(TileSizeX, TileSizeX, 1);
+                        tile.transform.localScale = new Vector3(utils.TileSizeX, utils.TileSizeX, 1);
                         tile.name = "[" + y + ", " + x + "]";
 
                         TileObject tileObject = tile.gameObject.GetComponent<TileObject>();
@@ -264,7 +287,7 @@ public class SceneSetup : MonoBehaviour
                         );
                 }
             }
-            _posY = _posY - TileSizeX;
+            _posY = _posY - utils.TileSizeX;
         }
     }
 

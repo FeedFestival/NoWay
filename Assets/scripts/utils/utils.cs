@@ -9,6 +9,8 @@ namespace Assets.scripts.utils
 {
     public static class utils
     {
+        public static float TileSizeX;
+
         public static float GetPercent(float value, float percent)
         {
             return (value / 100f) * percent;

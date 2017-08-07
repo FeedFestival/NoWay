@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using Assets.scripts.utils;
 using UnityEditor;
 using UnityEngine;
 
@@ -19,8 +20,8 @@ public class SceneSetupEditor : Editor
 
         //SceneSetup.HorizontalTileCount = EditorGUILayout.IntField("HorizontalTileCount:", SceneSetup.HorizontalTileCount);
 
-        //if (SceneSetup.UseFixedScreenScaler == false)
-        //    SceneSetup.VerticalTileCount = EditorGUILayout.IntField("VerticalTileCount:", SceneSetup.VerticalTileCount);
+        if (SceneSetup.UseFixedScreenScaler == false)
+            SceneSetup.ExtraPadding = EditorGUILayout.IntField("ExtraPadding:", SceneSetup.ExtraPadding);
 
         if (SceneSetup.UseFixedScreenScaler == false)
             SceneSetup.SidePadding = EditorGUILayout.IntField("SidePadding:", SceneSetup.SidePadding);
@@ -36,7 +37,7 @@ public class SceneSetupEditor : Editor
 
         DrawDefaultInspector();
 
-        if (SceneSetup.TileSizeX > 0)
+        if (utils.TileSizeX > 0)
         {
             EditorGUILayout.BeginVertical();
 
@@ -45,7 +46,7 @@ public class SceneSetupEditor : Editor
 
 TileSizeX : {0}
 
-            ", SceneSetup.TileSizeX
+            ", utils.TileSizeX
                     ));
 
             EditorGUILayout.EndVertical();

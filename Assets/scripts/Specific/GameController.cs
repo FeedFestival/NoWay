@@ -12,7 +12,7 @@ public class GameController : MonoBehaviour
     public Text DebugText;
 
     public Sphere Sphere;
-
+    
     public List<Dir> Directions;
     
     private static GameController _gameController;

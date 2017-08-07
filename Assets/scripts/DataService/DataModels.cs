@@ -103,7 +103,8 @@ public enum TileState
 {
     Clear,
     Blocked,
-    DeathZone
+    DeathZone,
+    BoxIn
 }
 
 [Serializable]
