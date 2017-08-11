@@ -10,7 +10,6 @@ public class Sphere : MonoBehaviour
     public Tile CurrentTile;
 
     public GameObject Sphere3D;
-    public GameObject SphereOutline;
 
     private Tile _toMoveTo;
 
@@ -18,6 +17,13 @@ public class Sphere : MonoBehaviour
 
     private float _animationTime;
     private BoxController _boxController;
+
+    public SphereReveries SphereReveries;
+
+    // delegates
+    public delegate void OnMovementComplete();
+    public delegate void OnNoMove();
+    public delegate void OnMovementStart();
 
     public void Init(TileObject tileObject = null, Tile tile = null)
     {
@@ -33,138 +39,80 @@ public class Sphere : MonoBehaviour
                 transform.position = CurrentTile.Position;
         }
 
-        transform.localScale = new Vector3(utils.TileSizeX, utils.TileSizeX, 1);
+        transform.localScale = new Vector3(utils.TileSizeX, utils.TileSizeX, utils.TileSizeX);
 
         _animationTime = 0.3f;
-        _origSPos = Sphere3D.transform.localPosition;
-        _origOutlinePos = SphereOutline.transform.localPosition;
+
+        SphereReveries = GetComponent<SphereReveries>();
+        SphereReveries.Init(Sphere3D);
 
         //
         _boxController = Main.Instance.SceneSetup.BoxController;
         CameraFollow.Instance.Init(transform.localScale);
     }
 
-    public IEnumerator Go(Dir dir)
+    public IEnumerator Go(
+        Dir dir,
+        OnMovementStart onMovementStart,
+        OnMovementComplete onMovementComplete,
+        OnNoMove onNoMove)
     {
         bool NoMove = false;
 
         var newPos = GetNewPos(dir, ref NoMove);
 
         if (NoMove)
+        {
+            onNoMove();
             yield break;
+        }
+
+        onMovementStart();
 
         LeanTween.move(gameObject, newPos, _animationTime).setEase(LeanTweenType.linear);
 
         // this is for when you have no control
         //LeanTween.rotateAround(Sphere3D, Vector3.forward, 360, 2.5f).setLoopClamp();
 
-        var amountToRotate = (360f / 4f);
-        switch (dir)
-        {
-            case Dir.Up:
-                LeanTween.rotateAround(Sphere3D, -Vector3.left, amountToRotate, _animationTime);
-                break;
-            case Dir.Right:
-                LeanTween.rotateAround(Sphere3D, -Vector3.up, amountToRotate, _animationTime);
-                break;
-            case Dir.Down:
-                LeanTween.rotateAround(Sphere3D, Vector3.left, amountToRotate, _animationTime);
-                break;
-            case Dir.Left:
-                LeanTween.rotateAround(Sphere3D, Vector3.up, amountToRotate, _animationTime);
-                break;
-            default:
-                throw new ArgumentOutOfRangeException("dir", dir, null);
-        }
+        RollArround(dir);
 
         Moving = true;
 
         yield return new WaitForSeconds(_animationTime);
 
+        onMovementComplete();
+
         CurrentTile = _toMoveTo;
         Moving = false;
     }
 
-    private Vector3 _origSPos;
-    private Vector3 _origOutlinePos;
-    private Vector3 _sideSPos;
-    private Vector3 _sideOutlinePos;
-
-    private float _leanAnimationTime = 0.1f;
-
-    private Dir _currentDir;
-    public Dir LeanDir;
-
-    private bool _isLeaned;
-
-    public IEnumerator AttemptGo(Dir dir)
+    public void RollArround(Dir dir, float percent = 4f, float? animT = null, bool reverse = false)
     {
-        _currentDir = dir;
+        var amountToRotate = (360f / percent);
+        Vector3 vDir;
 
-        if (_isLeaned)
-            yield break;
+        if (animT == null)
+            animT = _animationTime;
 
-        _isLeaned = true;
-        LeanDir = dir;
-
-        SetLeanPosition();
-        LeanTween.moveLocal(Sphere3D, _sideSPos, _leanAnimationTime).setEase(LeanTweenType.linear);
-        LeanTween.moveLocal(SphereOutline, _sideOutlinePos, _leanAnimationTime).setEase(LeanTweenType.linear);
-
-        yield return new WaitForSeconds(_animationTime - _leanAnimationTime);
-
-        if (LeanDir == _currentDir)
-            yield break;
-
-        _isLeaned = false;
-
-        if (_currentDir == Dir.None)
-        {
-            AtRest();
-        }
-        else
-        {
-            StartCoroutine(AttemptGo(_currentDir));
-        }
-        //LeanTween.moveLocal(Sphere3D, _origSPos, _leanAnimationTime).setEase(LeanTweenType.linear);
-        //LeanTween.moveLocal(SphereOutline, _origOutlinePos, _leanAnimationTime).setEase(LeanTweenType.linear);
-    }
-
-    public void AtRest()
-    {
-        _currentDir = Dir.None;
-        LeanDir = Dir.None;
-        _isLeaned = false;
-        LeanTween.moveLocal(Sphere3D, _origSPos, _leanAnimationTime).setEase(LeanTweenType.linear);
-        LeanTween.moveLocal(SphereOutline, _origOutlinePos, _leanAnimationTime).setEase(LeanTweenType.linear);
-    }
-
-    private void SetLeanPosition()
-    {
-        switch (LeanDir)
+        switch (dir)
         {
             case Dir.Up:
-                _sideSPos = new Vector3(_origSPos.x, _origSPos.y + 0.1f, _origSPos.z);
-                _sideOutlinePos = new Vector3(_origOutlinePos.x, _origOutlinePos.y + 0.1f, _origOutlinePos.z);
-                
+                vDir = reverse ? Vector3.left : -Vector3.left;
                 break;
             case Dir.Right:
-                _sideSPos = new Vector3(_origSPos.x + 0.1f, _origSPos.y, _origSPos.z);
-                _sideOutlinePos = new Vector3(_origOutlinePos.x + 0.1f, _origOutlinePos.y, _origOutlinePos.z);
+                vDir = reverse ? Vector3.up : -Vector3.up;
                 break;
             case Dir.Down:
-                _sideSPos = new Vector3(_origSPos.x, _origSPos.y - 0.1f, _origSPos.z);
-                _sideOutlinePos = new Vector3(_origOutlinePos.x, _origOutlinePos.y - 0.1f, _origOutlinePos.z);
+                vDir = reverse ? -Vector3.left : Vector3.left;
                 break;
             case Dir.Left:
-                _sideSPos = new Vector3(_origSPos.x - 0.1f, _origSPos.y, _origSPos.z);
-                _sideOutlinePos = new Vector3(_origOutlinePos.x - 0.1f, _origOutlinePos.y, _origOutlinePos.z);
+                vDir = reverse ? -Vector3.up : Vector3.up;
                 break;
             default:
-                _sideSPos = _origSPos;
-                _sideOutlinePos = _origOutlinePos;
-                break;
+                throw new ArgumentOutOfRangeException("dir", dir, null);
         }
+
+        LeanTween.rotateAround(Sphere3D, vDir, amountToRotate, animT.Value);
     }
 
     private Vector3 GetNewPos(Dir dir, ref bool noMove)

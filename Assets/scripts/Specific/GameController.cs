@@ -12,9 +12,9 @@ public class GameController : MonoBehaviour
     public Text DebugText;
 
     public Sphere Sphere;
-    
+
     public List<Dir> Directions;
-    
+
     private static GameController _gameController;
     public static GameController Instance
     {
@@ -25,7 +25,7 @@ public class GameController : MonoBehaviour
     {
         _gameController = this;
     }
-    
+
     void Start()
     {
         Directions = new List<Dir>();
@@ -37,7 +37,7 @@ public class GameController : MonoBehaviour
             DebugText = null;
         }
     }
-    
+
     void Update()
     {
         //  Up
@@ -81,22 +81,47 @@ public class GameController : MonoBehaviour
         }
 
         // send event continuously
+        if (Directions.Count > 0 && Sphere.Moving == false)
+            StartCoroutine(
+                Sphere.Go(Directions[0], OnMovementStart, OnMovementComplete, OnNoMove)
+                );
+    }
+
+    public void OnMovementStart()
+    {
+        if (Sphere.SphereReveries.IsAtRest)
+            StartCoroutine(Sphere.SphereReveries.Ignition(Directions[0]));
+    }
+
+    public void OnMovementComplete()
+    {
         if (Directions.Count > 0)
         {
-            if (Sphere.LeanDir != Directions[0])
-                StartCoroutine(Sphere.AttemptGo(Directions[0]));
-
-            if (Sphere.Moving == false)
-            {
-                StartCoroutine(Sphere.Go(Directions[0]));
-            }
+            GoLean();
         }
         else
         {
-            StartCoroutine(Sphere.AttemptGo(Dir.None));
-            //if (Sphere.Moving == false)
-            //    Sphere.AtRest();
+            // return to orginal position.
+
+            if (Sphere.SphereReveries.IsLeaned)
+                Sphere.SphereReveries.AtRest();
         }
+    }
+
+    public void OnNoMove()
+    {
+        // try to move but return.
+    }
+
+    private void GoLean()
+    {
+        //Debug.Log(Directions[0] + " != " + Sphere.SphereReveries.LeanDir);
+        if (Directions[0] != Sphere.SphereReveries.LeanDir && Sphere.SphereReveries.IsLeaned)
+        {
+            // switch to a new direction.
+            StartCoroutine(Sphere.SphereReveries.Ignition(Directions[0]));
+        }
+        // else keep the current direction
     }
 
     private void AddDirection(Dir dir)
@@ -109,7 +134,7 @@ public class GameController : MonoBehaviour
     private void RemoveDirection(Dir dir)
     {
         Directions.RemoveAll(d => d == dir);
-        
+
         OnDirectionChange();
     }
 
@@ -195,7 +220,7 @@ public class GameController : MonoBehaviour
             RemoveDirection(Dir.Left);
         }
     }
-    
+
     void FeelIt(long milliseconds = 15)
     {
         SoundManager.Instance.Play();

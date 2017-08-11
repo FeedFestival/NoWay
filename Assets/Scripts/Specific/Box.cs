@@ -29,8 +29,8 @@ public class Box : MonoBehaviour
             if (CurrentTile != null)
                 transform.position = CurrentTile.Position;
         }
-        
-        transform.localScale = new Vector3(utils.TileSizeX, utils.TileSizeX, 1);
+
+        transform.localScale = new Vector3(utils.TileSizeX, utils.TileSizeX, utils.TileSizeX);
 
         _animationTime = 0.3f;
 
