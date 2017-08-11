@@ -8,18 +8,22 @@ using UnityEngine;
 public class Sphere : MonoBehaviour
 {
     public Tile CurrentTile;
+    
+    public bool Moving;
+    public bool IsPushingSomething;
+
+    public object PushedObject;
+    //
 
     public GameObject Sphere3D;
 
     private Tile _toMoveTo;
 
-    public bool Moving;
-
     private float _animationTime;
     private BoxController _boxController;
 
     public SphereReveries SphereReveries;
-
+    
     // delegates
     public delegate void OnMovementComplete();
     public delegate void OnNoMove();
@@ -201,12 +205,17 @@ public class Sphere : MonoBehaviour
 
             var boxObj = _boxController.Boxes.FirstOrDefault(box => box.X == (CurrentTile.X + x) && box.Y == (CurrentTile.Y + y));
             if (boxObj != null)
+            {
+                IsPushingSomething = true;
+                PushedObject = boxObj;
+
                 StartCoroutine(boxObj.Go(GetDirection(x, y), adiacentTile));
+            }
         }
 
         return false;
     }
-
+    
     private bool IsWithinGridBounds(int x, int y)
     {
         if (CurrentTile.X + x < 0 || CurrentTile.Y + y < 0 || CurrentTile.X + x >= Game.Instance.HorizontalTileCount || CurrentTile.Y + y >= Game.Instance.VerticalTileCount)

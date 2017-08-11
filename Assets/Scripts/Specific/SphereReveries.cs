@@ -46,6 +46,7 @@ public class SphereReveries : MonoBehaviour
 
     }
 
+    // TODO move this in the sphere.
     public void AtRest()
     {
         IsLeaned = false;
@@ -57,6 +58,16 @@ public class SphereReveries : MonoBehaviour
 
         LeanTween.moveLocal(_sphere, _origSPos, _leanAnimationTime).setEase(LeanTweenType.linear);
         LeanTween.moveLocal(SphereOutline, _origOutlinePos, _leanAnimationTime).setEase(LeanTweenType.linear);
+
+        //if (GameController.Instance.Sphere.IsPushingSomething && GameController.Instance.Sphere.PushedObject != null)
+        //{
+        //    var pushedObject = GameController.Instance.Sphere.PushedObject;
+
+        //    if (pushedObject.GetType() == typeof(Box))
+        //    {
+        //        (pushedObject as Box).OnRest();
+        //    }
+        //}
     }
     
     private void SetLeanPositions()
