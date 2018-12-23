@@ -16,15 +16,16 @@ public class Main : MonoBehaviour
 
     public User LoggedUser;
 
-    public SceneSetup SceneSetup;
+    public SceneController SceneController;
+    public BoxesController BoxesController;
 
     public bool SaveMemory;
 
     [HideInInspector]
     public DataService DataService;
     [HideInInspector]
-    public GameController GameController;
-    
+    public Game Game;
+
     void Awake()
     {
         _main = GetComponent<Main>();
@@ -34,9 +35,9 @@ public class Main : MonoBehaviour
     void Start()
     {
         utils.Setup();
-        
-        GameController.Instance.gameObject.SetActive(true);
-        
+
+        Game.Instance.gameObject.SetActive(true);
+
         /*
          * ---------------------------------------------------------------------
          * * ---------------------------------------------------------------------
@@ -45,8 +46,11 @@ public class Main : MonoBehaviour
 
         DataService = new DataService("Database.db");
         CreateSession();
-
-        SceneSetup.Init();
+        
+        SceneController.Init();
+        
+        Game.Instance.Init();
+        Game.Instance.Sphere.gameObject.SetActive(true);
     }
 
     // callbacks

@@ -11,15 +11,22 @@ public class FpsDisplay : MonoBehaviour
 
     float deltaTime = 0.0f;
 
+    public bool TemperTime;
+    public float TimeScale;
+
     void Start()
     {
-        StartCoroutine(ShowFps());
+        if (Text != null)
+            StartCoroutine(ShowFps());
     }
 
     void Update()
     {
         if (DebugFps)
             deltaTime += (Time.deltaTime - deltaTime) * 0.1f;
+
+        if (TemperTime)
+            Time.timeScale = TimeScale;
     }
 
     IEnumerator ShowFps()

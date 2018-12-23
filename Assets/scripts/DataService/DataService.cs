@@ -66,8 +66,9 @@ public class DataService
 
         _connection = new SQLiteConnection(dbPath, SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.Create);
         Debug.Log("Final PATH: " + dbPath);
-
     }
+
+
 
     public void CleanUpUsers()
     {
@@ -91,11 +92,25 @@ public class DataService
         _connection.DropTable<Level>();
         _connection.CreateTable<Level>();
 
-        if (_connection.Table<Tile>().Where(x => x.Id > 0).FirstOrDefault() == null)
-        {
-            _connection.DropTable<Tile>();
-            _connection.CreateTable<Tile>();
-        }
+        //try
+        //{
+        //    if (_connection.Table<Tile>().Where(x => x.Id > 0).FirstOrDefault() == null)
+        //    {
+        //        _connection.DropTable<Tile>();
+        //        _connection.CreateTable<Tile>();
+        //    }
+        //}
+        //catch (Exception e)
+        //{
+        //    Debug.LogWarning(e.Message);
+
+        //    _connection.DropTable<Tile>();
+        //    _connection.CreateTable<Tile>();
+        //}
+
+        _connection.DropTable<Tile>();
+        _connection.CreateTable<Tile>();
+
     }
 
     /*
@@ -197,9 +212,20 @@ public class DataService
      * * --------------------------------------------------------------------------------------------------------------------------------------
      */
 
-    public void CreateLevel(Level level)
+    public int CreateLevel(Level level)
     {
-        _connection.Insert(level);
+        level.Id = _connection.Insert(level);
+        return level.Id;
+    }
+
+    internal void CreateLevels(List<Level> levels)
+    {
+        _connection.InsertAll(levels);
+    }
+
+    internal Level GetLevel(string mapName)
+    {
+        return _connection.Table<Level>().Where(x => x.Name == mapName).FirstOrDefault();
     }
 
     public IEnumerable<Level> GetLevels()
@@ -207,12 +233,48 @@ public class DataService
         return _connection.Table<Level>().Where(x => x.Id > 0);
     }
 
-    public Tile[,] GetMainMenuTiles()
+    public Tile[,] GetMainMenuTiles(int mapId)
     {
-        var tiles = _connection.Table<Tile>().Where(x => x.Id == 1);
+        int xLength = 0;
+        int yLength = 0;
+        List<Tile> allTiles = null;
+        if (mapId != 0)
+        {
+            allTiles = _connection.Table<Tile>().Where(x => x.MapId == mapId).ToList();
+            if (allTiles != null)
+            {
+                for (var i = 0; i < allTiles.Count; i++)
+                {
+                    if (xLength < allTiles[i].X)
+                        xLength = allTiles[i].X;
+                    if (yLength < allTiles[i].Y)
+                        yLength = allTiles[i].Y;
+                }
+            }
+        }
 
-        var array = new Tile[10,10];
+        if (allTiles != null && allTiles.Count > 0)
+        {
+            Tile[,] tiles = new Tile[xLength + 1, yLength + 1];
+            for (var i = 0; i < allTiles.Count; i++)
+            {
+                tiles[allTiles[i].X, allTiles[i].Y] = allTiles[i];
+            }
+            return tiles;
+        }
+        else
+        {
+            return null;
+        }
+    }
 
-        return null;
+    public void SaveTiles(List<Tile> tiles)
+    {
+        _connection.InsertAll(tiles);
+    }
+
+    public void UpdateTiles(List<Tile> tiles)
+    {
+        _connection.UpdateAll(tiles);
     }
 }

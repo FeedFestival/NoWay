@@ -63,48 +63,35 @@ public class Level
     [PrimaryKey, AutoIncrement]
     public int Id { get; set; }
 
-    public string Image { get; set; }
+    public string Name { get; set; }
 
-    [Ignore]
-    public string Word
-    {
-        get
-        {
-            var selectedLanguage = Main.Instance.LoggedUser.Language.ToLower();
-            if (selectedLanguage == "en_us")
-                return Engleza;
-            if (selectedLanguage == "pt_pt" || selectedLanguage == "pt_br")
-                return Portugheza;
-            return Romana;
-        }
-    }
-
-    public string Romana { get; set; }
-    public string Engleza { get; set; }
-    public string Portugheza { get; set; }
+    public bool isNew;
+    public bool hasNoSavedTiles;
 
     public override string ToString()
     {
         return string.Format(@"
             Id={0}, 
-            Image={1}, 
-            Romana={2}, 
-            Engleza={3},
-            Portugheza={4}",
+            Name={1}",
             Id,
-            Image,
-            Romana,
-            Engleza,
-            Portugheza);
+            Name
+            );
     }
 }
 
 public enum TileState
 {
-    Clear,
-    Blocked,
-    DeathZone,
-    BoxIn
+    Clear = 0,
+    Blocked = 1,
+    DeathZone = 2,
+    BoxIn = 3
+}
+
+public enum Speciality
+{
+    None = 0,
+    EntryPoint = 1,
+    ExitPoint = 2
 }
 
 [Serializable]
@@ -113,14 +100,24 @@ public class Tile
     [PrimaryKey, AutoIncrement]
     public int Id { get; set; }
 
+    public int MapId { get; set; }
+
     public int X { get; set; }
     public int Y { get; set; }
 
-    public int TileState
+    public TileState State
     {
-        get { return (int)State; }
+        get;
+        set;
     }
-    public TileState State;
+
+    public Speciality Speciality
+    {
+        get;
+        set;
+    }
+
+    public string Data { get; set; }
 
     [Ignore]
     public float x { get; set; }
@@ -128,12 +125,14 @@ public class Tile
     public float y { get; set; }
     [Ignore]
     public float z { get; set; }
+    [Ignore]
+    public TileDebug TileDebug { get; internal set; }
 
     public Vector3 Position;
-    
+
     public Tile MakeTile(
         TileState tileState = global::TileState.Clear,
-        int x = 0, 
+        int x = 0,
         int y = 0,
         Vector3 position = default(Vector3))
     {
@@ -143,5 +142,13 @@ public class Tile
         Position = position;
 
         return this;
+    }
+
+    internal void SetState(TileState state)
+    {
+        State = state;
+
+        if (TileDebug == null) return;
+        TileDebug.TileState = state;
     }
 }

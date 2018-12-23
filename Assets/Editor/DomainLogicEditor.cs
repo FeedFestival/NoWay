@@ -15,7 +15,7 @@ public class DomainLogicEditor : Editor
 
     public enum InspectorButton
     {
-        RecreateDataBase, CleanUpUsers, LoadLevelsCsv, UpdateMap
+        RecreateDataBase, CleanUpUsers, LoadLevelsCsv, UpdateMap, CreateSpecialityTable
     }
 
     private InspectorButton _actionTool;
@@ -28,7 +28,7 @@ public class DomainLogicEditor : Editor
             _setupConfirm = true;
         }
     }
-    
+
     public override void OnInspectorGUI()
     {
         _myScript = (DomainLogic)target;
@@ -41,6 +41,9 @@ public class DomainLogicEditor : Editor
 
         if (GUILayout.Button("Recreate Database"))
             _action = InspectorButton.RecreateDataBase;
+
+        if (GUILayout.Button("Recreate Speciality Table"))
+            _action = InspectorButton.CreateSpecialityTable;
 
         if (GUILayout.Button("Clean Up Users"))
             _action = InspectorButton.CleanUpUsers;
@@ -59,10 +62,12 @@ public class DomainLogicEditor : Editor
         EditorGUILayout.BeginVertical("box");
         GUILayout.Space(5);
 
-        GUILayout.Label("Load levels form csv file and put it in sqlite db.");
+        GUILayout.Label("Load levels form text file and put it in sqlite db.");
         GUILayout.Space(5);
-        
-        if (GUILayout.Button("Load levels"))
+
+        GUILayout.Space(5);
+
+        if (GUILayout.Button("Re-Create Levels"))
             _action = InspectorButton.LoadLevelsCsv;
 
         GUILayout.Space(5);
@@ -225,6 +230,9 @@ public class DomainLogicEditor : Editor
             GUILayout.Space(5);
             EditorGUILayout.BeginVertical();
         }
+
+        // Show default inspector property editor
+        DrawDefaultInspector();
     }
 
     private void ConfirmAccepted()
@@ -236,6 +244,11 @@ public class DomainLogicEditor : Editor
                 _myScript.RecreateDataBase();
                 break;
 
+            case InspectorButton.CreateSpecialityTable:
+
+                _myScript.CreateSpecialityTable();
+                break;
+
             case InspectorButton.CleanUpUsers:
 
                 _myScript.CleanUpUsers();
@@ -243,7 +256,7 @@ public class DomainLogicEditor : Editor
 
             case InspectorButton.LoadLevelsCsv:
 
-                _myScript.LoadLevelsFromCsv();
+                _myScript.LoadLevelsFromText();
                 break;
 
             //case InspectorButton.UpdateMap:

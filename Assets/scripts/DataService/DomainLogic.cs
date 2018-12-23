@@ -2,15 +2,26 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Text.RegularExpressions;
 using UnityEngine;
 
 [ExecuteInEditMode]
 public class DomainLogic : MonoBehaviour
 {
+    [SerializeField]
+    public TextAsset txtAsset;
+
+
     public void RecreateDataBase()
     {
         var dataService = new DataService("Database.db");
         dataService.CreateDB();
+    }
+
+    public void CreateSpecialityTable()
+    {
+        //var dataService = new DataService("Database.db");
+        //dataService.CreateSpecialityTable();
     }
 
     public void CleanUpUsers()
@@ -19,40 +30,27 @@ public class DomainLogic : MonoBehaviour
         dataService.CleanUpUsers();
     }
 
-    public void LoadLevelsFromCsv()
+    public void LoadLevelsFromText()
     {
-        var csvReader = GetComponent<CSVReader>();
+        List<Level> levels = new List<Level>();
 
-        var csvGrid = csvReader.SplitCsvGrid(null);
+        string fs = txtAsset.text;
+        string[] fLines = Regex.Split(fs, "\n|\r|\r\n");
 
-        var levels = new List<Level>();
-
-        for (int row = 1; row < csvGrid.GetLength(1); row++)
+        for (int i = 0; i < fLines.Length; i++)
         {
-            if (string.IsNullOrEmpty(csvGrid[2, row]))
-                break;
 
-            int id;
-            Int32.TryParse(csvGrid[0, row], out id);
+            string valueLine = fLines[i];
+            string[] values = Regex.Split(valueLine, ";"); // your splitter here
 
-            var level = new Level
+            foreach (var value in values)
             {
-                Id = id,
-                Image = csvGrid[1, row],
-                Romana = csvGrid[2, row],
-                Engleza = csvGrid[3, row],
-                Portugheza = csvGrid[4, row]
-            };
-
-            levels.Add(level);
+                if (string.IsNullOrEmpty(value) == false)
+                    levels.Add(new Level { Name = value });
+            }
         }
 
         var dataService = new DataService("Database.db");
-        dataService.CleanUpLevels();
-
-        foreach (Level l in levels)
-        {
-            dataService.CreateLevel(l);
-        }
+        dataService.CreateLevels(levels);
     }
 }
