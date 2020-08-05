@@ -44,6 +44,10 @@
      <Compile Include="Assets\Editor\MinimalistFreeStandardMat.cs" />
      <Compile Include="Assets\Editor\MinimalistSimpleMat.cs" />
      <Compile Include="Assets\Editor\MinimalistStandardMat.cs" />
+     <Compile Include="Assets\Minimalist Free v2.3\Editor\EditorGUILayoutExtended.cs" />
+     <Compile Include="Assets\Minimalist Free v2.3\Editor\MinimalistClipboard.cs" />
+     <Compile Include="Assets\Minimalist Free v2.3\Editor\MinimalistSkyEditor.cs" />
+     <Compile Include="Assets\Minimalist Free v2.3\Editor\MinimalistStandardEditor.cs" />
     <Reference Include="UnityEngine">
         <HintPath>C:/UnityEditors/2019.4.4f1/Editor/Data/Managed/UnityEngine/UnityEngine.dll</HintPath>
     </Reference>

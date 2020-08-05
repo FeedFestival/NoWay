@@ -36,6 +36,7 @@
     <ImplicitlyExpandDesignTimeFacades>false</ImplicitlyExpandDesignTimeFacades>
   </PropertyGroup>
   <ItemGroup>
+     <Compile Include="Assets\DomainLogicEditor.cs" />
      <Compile Include="Assets\Scripts\Behaviours\OutlineSystem.cs" />
      <Compile Include="Assets\Scripts\DataService\CSVReader.cs" />
      <Compile Include="Assets\Scripts\DataService\DataModels.cs" />
@@ -64,14 +65,18 @@
      <Compile Include="Assets\test.cs" />
      <None Include="Assets\Shaders\MKToonFree.shader" />
      <None Include="Assets\Shaders\OutlineDiffuse.shader" />
+     <None Include="Assets\Minimalist Free v2.3\Documentation\Readme.txt" />
      <None Include="Assets\Shaders\MKToonFreeMobile.shader" />
      <None Include="Assets\Shaders\Sky.shader" />
+     <None Include="Assets\Minimalist Free v2.3\Shaders\Minimalist Free Sky.shader" />
      <None Include="Assets\Shaders\Minimalist Advanced (2ColorGradient).shader" />
      <None Include="Assets\Shaders\Inc\Common\MKToonLight.cginc" />
      <None Include="Assets\Shaders\Inc\Forward\MKToonForward.cginc" />
      <None Include="Assets\Shaders\Inc\Forward\MKToonForwardAddSetup.cginc" />
      <None Include="Assets\Shaders\TSFOutline.shader" />
      <None Include="Assets\Shaders\ReadMe.txt" />
+     <None Include="Assets\Minimalist Free v2.3\Shaders\Minimalist Standard LocalSpace LWRP.shader" />
+     <None Include="Assets\Minimalist Free v2.3\Shaders\Minimalist Free Standard LWRP.shader" />
      <None Include="Assets\Shaders\Inc\Outline\MKToonOutlineOnlyIO.cginc" />
      <None Include="Assets\Shaders\Inc\Forward\MKToonForwardIO.cginc" />
      <None Include="Assets\Shaders\Inc\Common\MKToonDef.cginc" />
@@ -82,6 +87,7 @@
      <None Include="Assets\Shaders\TSF.shader" />
      <None Include="Assets\Shaders\MobileBlur.shader" />
      <None Include="Assets\Shaders\Inc\Outline\MKToonOutlineOnlySetup.cginc" />
+     <None Include="Assets\Minimalist Free v2.3\Shaders\Minimalist Standard LocalSpace.shader" />
      <None Include="Assets\Shaders\Minimalist Simple.shader" />
      <None Include="Assets\Shaders\MKToonFreeOutlineOnly.shader" />
      <None Include="Assets\Shaders\Inc\Forward\MKToonForwardBaseSetup.cginc" />
@@ -91,6 +97,8 @@
      <None Include="Assets\Shaders\ScreenSpaceOutlineShader.shader" />
      <None Include="Assets\Shaders\Inc\Common\MKToonV.cginc" />
      <None Include="Assets\Shaders\Inc\ShadowCaster\MKToonShadowCasterIO.cginc" />
+     <None Include="Assets\Minimalist Free v2.3\Shaders\Minimalist Free Standard.shader" />
+     <None Include="Assets\Minimalist Free v2.3\Shaders\Minimalist Standard LWRP.shader" />
      <None Include="Assets\Shaders\Inc\ShadowCaster\MKToonShadowCasterSetup.cginc" />
     <Reference Include="UnityEngine">
         <HintPath>C:/UnityEditors/2019.4.4f1/Editor/Data/Managed/UnityEngine/UnityEngine.dll</HintPath>
